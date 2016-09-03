@@ -37,3 +37,9 @@
     font-weight: normal;
   }
   .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+  .wards-outline {
+    fill: none;
+    stroke: #000;
+    stroke-width: 0.2;
+  }

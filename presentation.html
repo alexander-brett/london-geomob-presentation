@@ -4,6 +4,9 @@
     <title>Title</title>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="style.css"></link>
+    <script src="remark-latest.min.js"></script>
+    <script src="d3.v4.min.js"></script>
+    <script src="topojson.v1.min.js"></script>
   </head>
   <body>
     <textarea id="source">
@@ -53,10 +56,90 @@ Ed sent us all instructions not to show screens full of code...
 <br/>
 - We're going to look at code.
 ???
-.. which I'm going to ignore.
+... which I'm going to ignore.
 ---
+# Chloropleth
+
+(With thanks to Mike Bostock - https://bl.ocks.org/mbostock/4060606)
+
+???
+
+We'll start out with the most straightforward example. It'll take up about 3 minutes
+to go from zero to a the sort of coloured-in map you see day in day out
+---
+# Chloropleth
+## 1 - Get geography
+
+--
+[http://data.london.gov.uk/dataset/statistical-gis-boundary-files-london](http://data.london.gov.uk/dataset/statistical-gis-boundary-files-london)
+
+--
+
+!["Download GIS data for London"](img/download-gis-data-for-london.PNG "Click 'DOWNLOAD'!")
+
+---
+# Chloropleth
+## 2 - Transform into JSON
+--
+
+```
+"C:\Program Files\GDAL\ogr2ogr.exe"\
+  -f GeoJSON\
+  -t_srs EPSG:4326\
+  -lco COORDINATE_PRECISION=7\
+  wards.json\
+  London_Ward_CityMerged.shp
+```
+--
+
+```
+topojson\
+  -o wards_simplified.topojson\
+  --simplify-proportion 0.5\
+  --properties\
+  --id-property GSS_CODE\
+  -- wards.json
+```
+---
+# Chloropleth
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="d3.v4.min.js"></script>
+    <script src="topojson.v1.min.js"></script>
+    <link rel="stylesheet" href="style.css"/>
+  </head>
+  <body>
+    <svg id="Uncoloured-Chloropleth" width="500" height="500"></svg>
+    <script>
+      var projection = d3.geoMercator()
+        .scale(28000)
+        .center([-0.09, 51.48])
+        .translate([250,250]);
+
+      d3.json("wards_simplified.topojson", function(error, data){
+         d3.select("#Uncoloured-Chloropleth").append("g")
+          .selectAll("path")
+          .data(topojson.feature(data, data.objects.wards).features)
+          .enter().append("path")
+          .attr("d", d3.geoPath().projection(projection))
+          .attr("class", "wards-outline");
+      });
+    </script>
+  </body>
+</html>
+```
+---
+name: chloropleth-example
+
+#Chloropleth
+<svg id="Uncoloured-Chloropleth" width="500" height="500"></svg>
+---
+class: center, middle
+
+#The End
     </textarea>
-    <script src="Title_files/remark-latest.min.js"></script>
     <script>
       var slideshow = remark.create({
         navigation: {
@@ -64,6 +147,25 @@ Ed sent us all instructions not to show screens full of code...
           touch: true,
           click: false
         }});
+      loaded = {};
+      slideshow.on('showSlide', function(slide){
+        if (slide.properties.name == 'chloropleth-example' && !loaded['chloropleth-example']){
+          loaded['chloropleth-example'] = true;
+          var projection = d3.geoMercator()
+            .scale(28000)
+            .center([-0.09, 51.48])
+            .translate([250,250]);
+
+          d3.json("wards_simplified.topojson", function(error, data){
+             d3.select("#Uncoloured-Chloropleth").append("g")
+              .selectAll("path")
+              .data(topojson.feature(data, data.objects.wards).features)
+              .enter().append("path")
+              .attr("d", d3.geoPath().projection(projection))
+              .attr("class", "wards-outline");
+          });
+        }
+      })
     </script>
   </body>
 </html>
