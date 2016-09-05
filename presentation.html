@@ -4,9 +4,13 @@
     <title>Title</title>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="style.css"></link>
-    <script src="remark-latest.min.js"></script>
-    <script src="d3.v4.min.js"></script>
-    <script src="topojson.v1.min.js"></script>
+    <script src="js/remark.js"></script>
+    <script src="js/d3.v4.min.js"></script>
+    <script src="js/topojson.v1.min.js"></script>
+    <script src="js/sql.js"></script>
+    <script src="js/libs.js"></script>
+    <script src="js/hex/geometry.js"></script>
+    <script src="js/hex/grid.js"></script>
   </head>
   <body>
     <textarea id="source">
@@ -70,16 +74,33 @@ to go from zero to a the sort of coloured-in map you see day in day out
 # Chloropleth
 ## 1 - Get geography
 
+???
+
+Before we can think about putting data in place, we need some basic geography.
+
 --
 [http://data.london.gov.uk/dataset/statistical-gis-boundary-files-london](http://data.london.gov.uk/dataset/statistical-gis-boundary-files-london)
 
+???
+
+Fortunately, there are some fantastic resources available for us in this regard.
+All of my London data today comes from data.london.gov.uk - it's brilliant, easy-to-navigate,
+and there are some really surprisingly detailed and thorough datasets here. I'll show you
+a couple later.
 --
 
 !["Download GIS data for London"](img/download-gis-data-for-london.PNG "Click 'DOWNLOAD'!")
+???
 
+For now though, we find the ward boundaries, then download and unzip them.
 ---
 # Chloropleth
 ## 2 - Transform into JSON
+
+???
+
+The boundaries are provided as an ESRI shapefile, which is only of limited usefulness
+when working with javascript.
 --
 
 ```
@@ -131,41 +152,31 @@ topojson\
 </html>
 ```
 ---
-name: chloropleth-example
-
-#Chloropleth
-<svg id="Uncoloured-Chloropleth" width="500" height="500"></svg>
+name: chloropleth-example-outline
+<svg id="Uncoloured-Chloropleth" width="800" height="600"></svg>
+---
+name: chloropleth-example-coloured
+<svg id="Coloured-Chloropleth" width="800" height="600"></svg>
+---
+name: chloropleth-example-transition
+<svg id="Transition-Chloropleth" width="800" height="600"></svg>
+???
+/tap/
+---
+class: center
+name: hexgrid-cells
+<svg id="Hexgrid-cells" width="600" height="600"></svg>
+---
+class:center
+name: hexgrid-algorithm
+<svg id="Hexgrid-algorithm" width="600" height="600"></svg>
 ---
 class: center, middle
 
 #The End
+###alexander-brett.co.uk
+###github.com/alexander-brett
     </textarea>
-    <script>
-      var slideshow = remark.create({
-        navigation: {
-          scroll: false,
-          touch: true,
-          click: false
-        }});
-      loaded = {};
-      slideshow.on('showSlide', function(slide){
-        if (slide.properties.name == 'chloropleth-example' && !loaded['chloropleth-example']){
-          loaded['chloropleth-example'] = true;
-          var projection = d3.geoMercator()
-            .scale(28000)
-            .center([-0.09, 51.48])
-            .translate([250,250]);
-
-          d3.json("wards_simplified.topojson", function(error, data){
-             d3.select("#Uncoloured-Chloropleth").append("g")
-              .selectAll("path")
-              .data(topojson.feature(data, data.objects.wards).features)
-              .enter().append("path")
-              .attr("d", d3.geoPath().projection(projection))
-              .attr("class", "wards-outline");
-          });
-        }
-      })
-    </script>
+    <script src="js/slideshowfunctions.js"></script>
   </body>
 </html>

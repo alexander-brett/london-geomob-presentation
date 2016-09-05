@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="d3.v4.min.js"></script>
-    <script src="topojson.v1.min.js"></script>
+    <script src="js/d3.v4.min.js"></script>
+    <script src="js/topojson.v1.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
   </head>
   <body>
@@ -19,7 +19,7 @@
           .data(topojson.feature(data, data.objects.wards).features)
           .enter().append("path")
           .attr("d", d3.geoPath().projection(projection))
-          .attr("class", "wards-outline");
+          .attr("class","wards-outline");
       });
     </script>
   </body>
