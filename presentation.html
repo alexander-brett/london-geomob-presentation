@@ -21,55 +21,67 @@ class: center, middle
 ### alexander-brett.co.uk
 ???
 
-Hi everybody, it's great to be here this evening.
+Hi guys, my name's Alex, and I'm really happy to be here this evening.
+
+I'm massively jetlagged and I tend to mumble, so if there is
+something you can't hear or didn't understand, please interrupt me!
+
+Let's begin...
 ---
 
 # Motivation
 
 ???
 
-I put a picture up on my website the other day and Ed thought that...
+The other day I put a graphic up on my website.
+Ed saw it and thought that...
 --
 
 - We care about geospatial data
 ???
-...since we're all here because we care about geospatial data, I'd like to
-share some of what I did and why with you.
+...since we're all here because we care about geospatial data, you might
+enjoy some of my thoughts about what I made, how, and why.
 --
 
 - Maps are easy
 ???
-It turns out that drawing maps with Javascript is really pretty straightforward
+It turns out that drawing maps in the browser is pretty straightforward
 with help from appropriately-chosen libraries...
 --
 
 - Good visualisations are also easy
 ???
 
-...and that with a little bit of effort
-we can produce cartographic visualisations that are even more effective at
-communicating data we care about.
+...and that with a some thought we can produce other visualisations
+that more effectively communicate our geospatial data.
 ---
 # Content
 
 - We're going to draw pictures.
 ???
-We're going to make some pretty pictures using javascript.
+
+The idea is that I will demonstrate some different approaches using
+using javascript.
+
+A warning though:
+
 Ed sent us all instructions not to show screens full of code...
 --
 <br/>
 - We're going to look at code.
 ???
 ... which I'm going to ignore.
+
 ---
 # Chloropleth
 
-(With thanks to Mike Bostock - https://bl.ocks.org/mbostock/4060606)
-
 ???
 
-We'll start out with the most straightforward example. It'll take up about 3 minutes
-to go from zero to a the sort of coloured-in map you see day in day out
+We'll start out with the most straightforward example, a Chloropleth,
+which is simply a map with regions coloured in according
+to some metric.
+--
+(With thanks to Mike Bostock - https://bl.ocks.org/mbostock/4060606)
 ---
 # Chloropleth
 ## 1 - Get geography
@@ -92,7 +104,7 @@ a couple later.
 !["Download GIS data for London"](img/download-gis-data-for-london.PNG "Click 'DOWNLOAD'!")
 ???
 
-For now though, we find the ward boundaries, then download and unzip them.
+For now we'll find the ward boundaries, then download and unzip them.
 ---
 # Chloropleth
 ## 2 - Transform into JSON
@@ -151,9 +163,14 @@ topojson\
   </body>
 </html>
 ```
+
+???
 ---
 name: chloropleth-example-outline
 <svg id="Uncoloured-Chloropleth" width="800" height="600"></svg>
+
+???
+So far we have successfully drawn the outline of all the wards in London.
 ---
 name: chloropleth-example-coloured
 <svg id="Coloured-Chloropleth" width="800" height="600"></svg>
@@ -170,6 +187,20 @@ name: hexgrid-cells
 class:center
 name: hexgrid-algorithm
 <svg id="Hexgrid-algorithm" width="600" height="600"></svg>
+---
+class:center
+name: hexgrid-boroughs
+<svg id="Hexgrid-boroughs" width="600" height="600"></svg>
+---
+class:center
+name: hexgrid-transition
+<svg id="Hexgrid-transition" width="600" height="600"></svg>
+---
+#Politics
+---
+class:center
+name: bubbles-examples
+<svg id="bubbles-examples" width="800" height="600"></svg>
 ---
 class: center, middle
 
