@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src="js/d3.v4.min.js"></script>
-    <script src="js/topojson.v1.min.js"></script>
+    <script src="../js/d3.v4.min.js"></script>
+    <script src="../js/topojson.v1.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
   </head>
   <body>
-    <svg id="Uncoloured-Chloropleth" width="500" height="500"></svg>
+    <svg id="Uncoloured-Chloropleth" width="600" height="600"></svg>
     <script>
       var projection = d3.geoMercator()
-        .scale(28000)
-        .center([-0.09, 51.48])
-        .translate([250,250]);
+        .scale(35000)
+        .center([-0.09, 51.5])
+        .translate([300,300]);
 
       d3.json("wards_simplified.topojson", function(error, data){
          d3.select("#Uncoloured-Chloropleth").append("g")

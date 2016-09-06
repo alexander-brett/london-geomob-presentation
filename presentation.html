@@ -11,6 +11,7 @@
     <script src="js/libs.js"></script>
     <script src="js/hex/geometry.js"></script>
     <script src="js/hex/grid.js"></script>
+    <script src="js/databaseinteractions.js"></script>
   </head>
   <body>
     <textarea id="source">
@@ -167,16 +168,16 @@ topojson\
 ???
 ---
 name: chloropleth-example-outline
-<svg id="Uncoloured-Chloropleth" width="800" height="600"></svg>
+<svg id="Uncoloured-Chloropleth" width="600" height="600"></svg>
 
 ???
 So far we have successfully drawn the outline of all the wards in London.
 ---
 name: chloropleth-example-coloured
-<svg id="Coloured-Chloropleth" width="800" height="600"></svg>
+<svg id="Coloured-Chloropleth" width="600" height="600"></svg>
 ---
 name: chloropleth-example-transition
-<svg id="Transition-Chloropleth" width="800" height="600"></svg>
+<svg id="Transition-Chloropleth" width="600" height="600"></svg>
 ???
 /tap/
 ---
@@ -200,7 +201,31 @@ name: hexgrid-transition
 ---
 class:center
 name: bubbles-examples
-<svg id="bubbles-examples" width="800" height="600"></svg>
+<svg id="bubbles-examples" width="600" height="600"></svg>
+---
+class:center
+name: bubbles-animated
+<svg id="bubbles-animated" width="600" height="600"></svg>
+???
+The swiss army knife of bubble animations is the d3 force simulation. It
+iteratively repositions each node according to constraints that you programme
+in. In this case, we'll specify a collision constraint - which is to say we'll
+just mandate that the circles cannot overlap.
+###tap
+This works well!
+But essentially the whole point of this is that we are able to toggle between
+different data axes to define the radius. So let's now switch the radius to be
+defined by population instead of land area.
+---
+class:center
+name: bubbles-animated-better
+<svg id="bubbles-animated-better" width="600" height="600"></svg>
+
+---
+class:center, middle
+name: bubbles-animated-comparison
+<img src="img/before-centering.svg" width="350px"/>
+<img src="img/after-centering.svg" width="350px"/>
 ---
 class: center, middle
 
