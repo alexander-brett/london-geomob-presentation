@@ -3,7 +3,7 @@
   <head>
     <script src="../js/d3.v4.min.js"></script>
     <script src="../js/topojson.v1.min.js"></script>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="../style.css"/>
   </head>
   <body>
     <svg id="Uncoloured-Chloropleth" width="600" height="600"></svg>
@@ -12,8 +12,8 @@
         .scale(35000)
         .center([-0.09, 51.5])
         .translate([300,300]);
-
-      d3.json("wards_simplified.topojson", function(error, data){
+        
+      d3.json("../wards_simplified.topojson", function(error, data){
          d3.select("#Uncoloured-Chloropleth").append("g")
           .selectAll("path")
           .data(topojson.feature(data, data.objects.wards).features)

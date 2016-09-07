@@ -1,16 +1,21 @@
+// Explanatory notes for this file.
+
+// I could have just downloaded the .csv file from data.london.gov.uk and been
+// happy, but ultimately I was putting this on my website, and so I was concerned
+// about speed and data usage - and CSV is not the most efficient way to do things.
+
+// Additionally, putting the data I cared about in a sqlite database made coping
+// with datasets that spanned multiple years much easier, especially since
+// querying things with sql.js is very easy indeed.
+
 var databasePromise = loadDatabase("data.db");
 
 function colourFromPercentPromise(table, column){
   return databasePromise.then(function(db){
-    var query = db.exec(
-      "SELECT max("+column+"), min("+column+") FROM "+table+";"
-      + "SELECT id, "+column+" FROM "+table+";"
-    );
-    var min = query[0].values[0][1];
-    var max = query[0].values[0][0];
-    var data = {};
-    query[1].values.forEach(function(value){data[value[0]] = value[1];});
-    var convert = d3.scaleLinear().domain([fix(min),fix(max)]).range([230,20]);
+    var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+";");
+    var [max, min] = query[0].values[0];
+    var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+";");
+    var convert = d3.scaleLinear().domain([fix(min),fix(max)]).range([255,0]);
     return function(d, colourpicker){
       var n = convert(fix(data[d.id]));
       return typeof(colourpicker) === "function" ? colourpicker(n) : d3.rgb(0,n, n);
@@ -20,14 +25,9 @@ function colourFromPercentPromise(table, column){
 
 function radiusByAxisPromise(column, table){
   return databasePromise.then(function(db){
-    var query = db.exec(
-      "SELECT max("+column+"), min("+column+") FROM "+table+";"
-      + "SELECT id, "+column+" FROM "+table+" ORDER BY id ASC;"
-    );
-    var data = {};
-    query[1].values.forEach(function(value){data[value[0]] = value[1];});
-    var min = query[0].values[0][1];
-    var max = query[0].values[0][0];
+    var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+";");
+    var [max, min] = query[0].values[0];
+    var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+" ORDER BY id ASC;");
     var convert = d3.scaleSqrt().domain([0,fix(max)]).range([0,24]);
     return function(i){
       return convert(fix(data[i.id]))
@@ -40,13 +40,11 @@ var radiusByAreaPromise = radiusByAxisPromise("area", "area");
 var colourByCouncilHousingPromise = colourFromPercentPromise('housing', 'social*100.0/(social + owned + mortgage + private_rent + other)');
 
 var colourByMayorPromise = databasePromise.then(function(db){
-  var query = db.exec(
-    "SELECT id, winner FROM voting");
-  var data = {};
-  query[0].values.forEach(function(value){data[value[0]] = value[1];});
-  var sadiq = d3.rgb(250,15,15);
-  var zac = d3.rgb(15,15,250);
-  var colours = {'Sadiq Aman Khan - Labour Party' : sadiq, 'Zac Goldsmith - The Conservative Party': zac};
+  var data = sqlQuery(db, "SELECT id, winner FROM voting");
+  var colours = {
+    'Sadiq Aman Khan - Labour Party' : d3.rgb(250,15,15),
+    'Zac Goldsmith - The Conservative Party': d3.rgb(15,15,250)
+  };
   return function(d){
     return colours[data[d.id]];
   }
@@ -77,14 +75,9 @@ var boroughsPromise = databasePromise.then(function(db){
 
 var radiusByPopulationPromise = databasePromise.then(function(db){
   var table = "population", column = "population";
-  var query = db.exec(
-    "SELECT max("+column+"), min("+column+") FROM "+table+" WHERE year=2016;"
-    + "SELECT id, "+column+" FROM "+table+" WHERE year=2016 ORDER BY id ASC;"
-  );
-  var data = {};
-  query[1].values.forEach(function(value){data[value[0]] = value[1];});
-  var min = query[0].values[0][1];
-  var max = query[0].values[0][0];
+  var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+" WHERE year=2016;");
+  var [max, min] = query[0].values[0];
+  var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+" WHERE year=2016 ORDER BY id ASC;");
   var convert = d3.scaleSqrt().domain([0,fix(max)]).range([0,10]);
   return function(i){
     return convert(fix(data[i.id]))

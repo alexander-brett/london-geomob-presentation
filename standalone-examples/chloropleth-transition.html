@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="../js/d3.v4.min.js"></script>
+    <script src="../js/topojson.v1.min.js"></script>
+    <script src="../js/sql.js"></script>
+    <script src="../js/libs.js"></script>
+    <link rel="stylesheet" href="../style.css"/>
+  </head>
+  <body>
+    <svg id="Uncoloured-Chloropleth" width="600" height="600"></svg>
+    <script>
+      var projection = d3.geoMercator()
+        .scale(35000)
+        .center([-0.09, 51.5])
+        .translate([300,300])
+
+    function boroughColourGenerator(){
+      var boroughMap = {}
+      , boroughIndex = 0
+      , boroughPalette = d3.scaleOrdinal(d3.schemeCategory20);
+      return function(datum){
+        if(boroughMap[datum.properties.BOROUGH] === undefined){
+          boroughMap[datum.properties.BOROUGH] = boroughIndex++%20;
+        }
+        return boroughPalette(boroughMap[datum.properties.BOROUGH]);
+      }
+    }
+
+    function socialHousingColourGenerator(database){
+      var proportionSpec = 'social*100.0/(social + owned + mortgage + private_rent + other)';
+      var query = database.exec("SELECT max("+proportionSpec+"), min("+proportionSpec+") FROM housing;");
+      var [max, min] = query[0].values[0];
+      var data = sqlQuery(database, "SELECT id, "+proportionSpec+" FROM housing;");
+      var colourScale = d3.scaleLinear().domain([fix(min),fix(max)]).range([230,20]);
+      return function(d){
+        var n = colourScale(fix(data[d.id]));
+        return d3.rgb(0,n, n);
+      }
+    }
+
+    Promise.all([
+      loadUrl("../wards_simplified.topojson", "json"),
+      loadDatabase("../data.db")
+    ]).then(function(args){
+        var [geography, database] = args
+        , nodes = d3.select("#Uncoloured-Chloropleth").append("g")
+          .selectAll("path")
+          .data(topojson.feature(geography, geography.objects.wards).features)
+          .enter().append("path")
+          .attr("d", d3.geoPath().projection(projection))
+          .style("fill", boroughColourGenerator());
+
+        document.onclick = function(){
+          nodes.transition().duration(1500).style("fill", socialHousingColourGenerator(database));
+        };
+      });
+    </script>
+  </body>
+</html>

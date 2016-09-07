@@ -43,3 +43,5 @@
     stroke: #000;
     stroke-width: 0.2;
   }
+
+img {max-width:800px; max-height:600px;}

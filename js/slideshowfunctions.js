@@ -1,12 +1,3 @@
-
-function fix(d){
-  return typeof(d) === 'string'
-    ? d == 'n/a'
-      ? 0
-      : +(d.replace(new RegExp(',', 'g'),'').replace('£','').replace('%', ''))
-    : d;
-}
-
 var slideshow = remark.create({
   navigation: {
     scroll: false,
@@ -32,12 +23,18 @@ var projection = d3.geoMercator()
   .center([-0.09, 51.5])
   .translate([300,300]);
 
+function makeGrid(data){
+    var grid = new HexGrid(600, 630);
+    data.forEach(grid.occupyNearest);
+    return grid;
+};
+
 var hidden = {}, hideFunctions = {};
 var tapped = {}, tapFunctions = {};
 var loaded = {}, loadFunctions = {
   "chloropleth-example-outline": function(){
     geographyPromise.then(function(geography){
-      d3.select("#Uncoloured-Chloropleth")
+      d3.select("#chloropleth-example-outline")
       .selectAll("path")
       .data(geography)
       .enter().append("path")
@@ -48,7 +45,7 @@ var loaded = {}, loadFunctions = {
   "chloropleth-example-coloured": function(name){
     return geographyPromise.then(function(geography){
       var boroughs = {}, i = 0, palette = d3.scaleOrdinal(d3.schemeCategory20);
-      return d3.select(name || "#Coloured-Chloropleth")
+      return d3.select(name || "#chloropleth-example-coloured")
       .selectAll("path")
       .data(geography)
       .enter().append("path")
@@ -61,7 +58,7 @@ var loaded = {}, loadFunctions = {
   },
   "chloropleth-example-transition": function(){
     Promise.all([
-      loadFunctions["chloropleth-example-coloured"]("#Transition-Chloropleth"),
+      loadFunctions["chloropleth-example-coloured"]("#chloropleth-example-transition"),
       colourByCouncilHousingPromise
     ]).then(function(args){
       var [nodes, fn] = args;
@@ -70,35 +67,38 @@ var loaded = {}, loadFunctions = {
       }];
     });
   },
-  "hexgrid-cells": function(name){
-    var grid = new HexGrid(600, 630);
-    d3.select(name||"#Hexgrid-cells").selectAll("polygon").data(grid.cells)
-      .enter().append('polygon')
-      .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
-      .style('fill', 'rgba(0,0,0,0.2)').attr('transform', function(d){
-        return 'translate('+d.x+','+d.y+') scale('+(grid.gridSpacing/Math.sqrt(3)-0.1)+')';
-      });
-    return grid;
+  "hexgrid-naughty": function(){
+    return boroughsPromise.then(function(data){
+      var grid = new HexGrid(600, 630);
+      data.forEach(grid.brokenOccupyNearest);
+      return d3.select("#hexgrid-naughty").selectAll('polygon')
+        .data(data)
+        .enter().append('polygon')
+        .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
+        .style('fill', colourByBorough)
+        .attr('transform', function(d){
+          return 'translate('+d.screenX+','+d.screenY+') scale('+(grid.gridSpacing/Math.sqrt(3)-0.1)+')';
+        });
+    });
   },
   "hexgrid-algorithm": function(name){
-    var grid = new HexGrid(600, 630);
-    d3.select("#Hexgrid-algorithm").selectAll("polygon").data(grid.cells)
-      .enter().append('polygon')
-      .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
-      .style('fill', 'none').attr('transform', function(d){
-        return 'translate('+d.x+','+d.y+') scale('+(grid.gridSpacing/Math.sqrt(3)-0.1)+')';
-      });
-    var boroughs = {}, i = 0, palette = d3.scaleOrdinal(d3.schemeCategory20);
     boroughsPromise.then(function(data){
+      var grid = new HexGrid(600, 630);
+      d3.select("#Hexgrid-algorithm").selectAll("polygon").data(grid.cells)
+        .enter().append('polygon')
+        .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
+        .style('fill', 'none').attr('transform', function(d){
+          return 'translate('+d.x+','+d.y+') scale('+(grid.gridSpacing/Math.sqrt(3)-0.1)+')';
+        });
       var dataIndex = 0;
       var nextPoint = d3.select("#Hexgrid-algorithm").append('circle');
       var iterate = function(){
+        grid.occupyNearest(data[dataIndex]);
         nextPoint.datum(data[dataIndex])
           .attr('cx', function(d){return d.x})
           .attr('cy', function(d){return d.y})
           .attr('r', 3)
           .style('fill', 'red');
-        grid.occupyNearest(data[dataIndex]);
         d3.select("#Hexgrid-algorithm")
           .selectAll("polygon")
           .data(grid.boundaryCells(), function(d){return d.hexId})
@@ -106,10 +106,7 @@ var loaded = {}, loadFunctions = {
         d3.select("#Hexgrid-algorithm")
           .selectAll("polygon")
           .data([data[dataIndex]], function(d){return d.hexId})
-          .style('fill',  function(d){
-            if(boroughs[d.borough] === undefined){ boroughs[d.borough] = i++%20; }
-            return palette(boroughs[d.borough]);
-          });
+          .style('fill', colourByBorough);
         d3.select("#Hexgrid-algorithm").append('line').datum(data[dataIndex])
           .attr('x1', function(d){return d.x;})
           .attr('y1', function(d){return d.y;})
@@ -125,32 +122,19 @@ var loaded = {}, loadFunctions = {
       iterate();
     });
   },
-  "hexgrid-boroughs": function(name){
-    var grid = new HexGrid(600, 630);
-    return boroughsPromise.then(function(data){
-      return d3.select(name||"#Hexgrid-boroughs").selectAll('polygon')
-        .data(data)
-        .enter().append('polygon')
-        .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
-        .style('fill', colourByBorough).attr('transform', function(d){
-          grid.occupyNearest(d);
-          return 'translate('+d.screenX+','+d.screenY+') scale('+(grid.gridSpacing/Math.sqrt(3)-0.1)+')';
-        });
-    });
-  },
   "hexgrid-transition": function(){
     Promise.all([
       boroughsPromise,
       colourByCouncilHousingPromise
     ]).then(function(args){
       var [data, fn] = args;
-      var grid = new HexGrid(600, 630);
+      var grid = makeGrid(data);
       var nodes = d3.select("#Hexgrid-transition").selectAll('polygon')
         .data(data)
         .enter().append('polygon')
         .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
-        .style('fill',  colourByBorough).attr('transform', function(d){
-          grid.occupyNearest(d);
+        .style('fill',  colourByBorough)
+        .attr('transform', function(d){
           return 'translate('+d.screenX+','+d.screenY+') scale('+(grid.gridSpacing/Math.sqrt(3))+')';
         });
       tapFunctions["hexgrid-transition"] = [function(){
@@ -164,7 +148,7 @@ var loaded = {}, loadFunctions = {
            }).attr('transform', function(d){
              return 'translate('+d.screenX+','+d.screenY+') scale(0)';
            }).transition().duration(1000).attr('transform', function(d){
-             return 'translate('+d.screenX+','+d.screenY+') scale(5)';
+             return 'translate('+d.screenX+','+d.screenY+') scale(5.4)';
            });
         },
         function(){
@@ -175,19 +159,6 @@ var loaded = {}, loadFunctions = {
         }
       ];
     });
-  },
-  'bubbles-examples': function(name){
-      Promise.all([boroughsPromise, radiusByAreaPromise]).then(function(args){
-        var [data, areaFn] = args;
-        d3.select(name || "#bubbles-examples").selectAll('circle')
-         .data(data)
-         .enter()
-         .append('circle')
-         .attr('cx', function(d){return d.initialX;})
-         .attr('cy', function(d){return d.initialY;})
-         .attr('r', areaFn)
-         .style('fill', colourByBorough);
-      });
   },
   'bubbles-animated': function(){
     Promise.all([boroughsPromise, radiusByAreaPromise]).then(function(args){

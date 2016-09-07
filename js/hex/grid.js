@@ -49,6 +49,21 @@ function HexGrid(size, numberOfElements){
       : Math.pow(dr, 1)*Math.pow(dtheta, 0.5)*Math.pow(sqdist(a,b)/origin.x,2);
   };
 
+  this.brokenOccupyNearest = function(p){
+    var minDist = 1000000, result;
+    _self.cells.filter(function(c){return c.occupied != true})
+      .forEach(function(cell){
+        var d = norm(p, cell);
+        if (d < minDist){
+          minDist = d;
+          result = cell;
+        }
+      });
+    result.occupied = true;
+    p.screenX = result.x;
+    p.screenY = result.y;
+  }
+
   this.occupyNearest = function(p) {
     var minDist = 1000000, candidate;
     boundary.forEach(function(b){
