@@ -10,34 +10,72 @@
 
 var databasePromise = loadDatabase("data.db");
 
-function colourFromPercentPromise(table, column){
+function drawColourKey(elementName, colourer, isleft){
+  var base = d3.select(elementName);
+  var colkey =  base.selectAll(
+    isleft ? "cirle.colour.leftkey" : "circle.colour.key").data(colourer.key);
+  colkey.transition().duration(700).style("fill", function(d){return d.colour});
+  colkey.exit().remove();
+  colkey.enter()
+    .append('circle')
+    .attr('cx', isleft ? 30 : 600-30)
+    .attr('cy', function(d,i){return 20+(40*i)})
+    .attr("class",isleft ? "colour leftkey" : "colour key")
+    .style("fill", function(d){return d;})
+    .attr("r", 10);
+
+  var colcaption = base.selectAll(isleft ? "text.colour.leftkey":"text.colour.key").data(colourer.captions);
+  colcaption.text(function(d){return d});
+  colcaption.exit().remove();
+  colcaption.enter()
+    .append('text')
+    .attr("alignment-baseline", "middle")
+    .attr("text-anchor", isleft ? "start" : "end")
+    .attr("class", isleft?"colour leftkey":"colour key")
+    .text(function(d){return d;})
+    .attr("x", isleft ? 60 : 600 - 60)
+    .attr("y", function(d,i){return 20+(40*i)});
+}
+
+function colourFromPercentPromise(table, column, caption){
   return databasePromise.then(function(db){
     var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+";");
     var [max, min] = query[0].values[0];
     var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+";");
     var convert = d3.scaleLinear().domain([fix(min),fix(max)]).range([255,0]);
-    return function(d, colourpicker){
-      var n = convert(fix(data[d.id]));
-      return typeof(colourpicker) === "function" ? colourpicker(n) : d3.rgb(0,n, n);
-    }
+    return function(colourpicker){
+      function _colour(value){
+        var n = convert(fix(value));
+        return typeof(colourpicker) === "function" ? colourpicker(n) : d3.rgb(0,n, n);
+      }
+      var colourer = function(d){return _colour(data[d.id]);};
+      colourer.key = [min, max].map(_colour);
+      colourer.captions = [min,max].map(function(d){
+        return (fix(d)+caption).replace(/(\d.\d)\d+/, "$1");
+      });
+      return colourer;
+    };
   });
 }
 
-function radiusByAxisPromise(column, table){
+function radiusByAxisPromise(column, table, caption){
   return databasePromise.then(function(db){
     var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+";");
     var [max, min] = query[0].values[0];
     var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+" ORDER BY id ASC;");
     var convert = d3.scaleSqrt().domain([0,fix(max)]).range([0,24]);
-    return function(i){
+    var sizer = function(i){
       return convert(fix(data[i.id]))
     };
+    sizer.key = [convert(fix(min)), convert(fix(max))];
+    sizer.captions = [min + caption, max + caption];
+    return sizer;
   });
 }
 
-var radiusByAreaPromise = radiusByAxisPromise("area", "area");
+var radiusByAreaPromise = radiusByAxisPromise("area", "area", " sq. km");
 
-var colourByCouncilHousingPromise = colourFromPercentPromise('housing', 'social*100.0/(social + owned + mortgage + private_rent + other)');
+var colourByCouncilHousingPromise = colourFromPercentPromise('housing', 'social*100.0/(social + owned + mortgage + private_rent + other)', "% social housing");
 
 var colourByMayorPromise = databasePromise.then(function(db){
   var data = sqlQuery(db, "SELECT id, winner FROM voting");
@@ -45,9 +83,14 @@ var colourByMayorPromise = databasePromise.then(function(db){
     'Sadiq Aman Khan - Labour Party' : d3.rgb(250,15,15),
     'Zac Goldsmith - The Conservative Party': d3.rgb(15,15,250)
   };
-  return function(d){
+  var colourer = function(d){
     return colours[data[d.id]];
-  }
+  };
+  colourer.key = Object.keys(colours).map(function(i){return colours[i]});
+  colourer.captions = [
+   "Sadiq Aman Khan", "Zac Goldsmith"
+  ]
+  return colourer;
 })
 
 var boroughsPromise = databasePromise.then(function(db){
@@ -74,12 +117,15 @@ var boroughsPromise = databasePromise.then(function(db){
 });
 
 var radiusByPopulationPromise = databasePromise.then(function(db){
-  var table = "population", column = "population";
+  var table = "population", column = "population", caption = " inhabitants";
   var query = db.exec("SELECT max("+column+"), min("+column+") FROM "+table+" WHERE year=2016;");
   var [max, min] = query[0].values[0];
   var data = sqlQuery(db, "SELECT id, "+column+" FROM "+table+" WHERE year=2016 ORDER BY id ASC;");
   var convert = d3.scaleSqrt().domain([0,fix(max)]).range([0,10]);
-  return function(i){
+  var sizer = function(i){
     return convert(fix(data[i.id]))
   };
+  sizer.key = [convert(fix(min)), convert(fix(max))];
+  sizer.captions = [min + caption, max + caption];
+  return sizer;
 });

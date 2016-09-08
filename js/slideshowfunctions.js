@@ -62,8 +62,10 @@ var loaded = {}, loadFunctions = {
       colourByCouncilHousingPromise
     ]).then(function(args){
       var [nodes, fn] = args;
+      var colourer = fn();
       tapFunctions["chloropleth-example-transition"] = [function(){
-        nodes.transition().duration(1500).style("fill", fn);
+        nodes.transition().duration(1500).style("fill", colourer);
+        drawColourKey("#chloropleth-example-transition", colourer, true);
       }];
     });
   },
@@ -138,26 +140,27 @@ var loaded = {}, loadFunctions = {
           return 'translate('+d.screenX+','+d.screenY+') scale('+(grid.gridSpacing/Math.sqrt(3))+')';
         });
       tapFunctions["hexgrid-transition"] = [function(){
-          d3.select("#Hexgrid-transition").selectAll('polygon.second')
-           .data(data)
-           .enter().append('polygon')
-           .attr('class', 'second')
-           .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
-           .style('fill',  function(d){
-             return fn(d, function(n){return d3.rgb(n,n,n);});
-           }).attr('transform', function(d){
-             return 'translate('+d.screenX+','+d.screenY+') scale(0)';
-           }).transition().duration(1000).attr('transform', function(d){
-             return 'translate('+d.screenX+','+d.screenY+') scale(5.4)';
-           });
-        },
-        function(){
-          colourByMayorPromise.then(function(mayorFn){
-            nodes.transition().duration(1000)
-              .style('fill', mayorFn);
-          });
-        }
-      ];
+        var colourer = fn(function(n){return d3.rgb(n,n,n);})
+        d3.select("#Hexgrid-transition").selectAll('polygon.second')
+         .data(data)
+         .enter().append('polygon')
+         .attr('class', 'second')
+         .attr('points', '0,1 0.866,0.5 0.866,-0.5 0,-1 -0.866,-0.5 -0.866,0.5')
+         .style('fill', colourer)
+         .attr('transform', function(d){
+           return 'translate('+d.screenX+','+d.screenY+') scale(0)';
+         }).transition().duration(1000).attr('transform', function(d){
+           return 'translate('+d.screenX+','+d.screenY+') scale(5.4)';
+         });
+        drawColourKey("#Hexgrid-transition", colourer, true)
+      },
+      function(){
+        colourByMayorPromise.then(function(mayorFn){
+          nodes.transition().duration(1000)
+            .style('fill', mayorFn);
+          drawColourKey("#Hexgrid-transition", mayorFn)
+        });
+      }];
     });
   },
   'bubbles-animated': function(){
